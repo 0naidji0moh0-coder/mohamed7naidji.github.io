@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>واجهة محمد - الألعاب البسيطة جداً</title>
+
+    <style>
+        /* التنسيق الأساسي */
+        body {
+            font-family: 'Consolas', monospace; 
+            background-color: #0d0d0d;
+            color: #00ff00;
+            text-align: center;
+            padding-top: 50px;
+            direction: rtl;
+        }
+
+        h1, h2 {
+            color: #00cc00;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        button {
+            background-color: #004d00;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 12px 25px;
+            margin: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s, color 0.3s, transform 0.1s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        button:hover {
+            background-color: #00ff00;
+            color: #0d0d0d;
+            transform: translateY(-2px);
+        }
+
+        .game-buttons button {
+            display: block;
+            width: 300px; 
+            margin: 15px auto;
+        }
+
+        /* إخفاء الواجهات */
+        #games-menu, #game-screen {
+            display: none;
+        }
+
+        #back-button {
+            margin-top: 40px;
+            background-color: #4d0000;
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+        #back-button:hover {
+             background-color: #ff0000;
+             color: #0d0d0d;
+        }
+
+        /* حاوية اللعبة */
+        #game-content {
+            border: 3px dashed #00ff00;
+            padding: 30px;
+            margin: 30px auto;
+            width: 90%;
+            max-width: 700px;
+            min-height: 400px;
+        }
+        
+        /* تنسيق خانة الادخال */
+        #guess-input, #math-answer-input {
+            background-color: #222;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* تنسيق لعبة النرد و الفليب */
+        .big-text { font-size: 50px; margin: 30px 0; }
+        .red-text { color: #ff0000; }
+        .green-text { color: #00ff00; }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-screen">
+        <h1 id="welcome-title">سلام عليكم، أنا **محمد الهاكر**</h1>
+        <p id="welcome-message" style="font-size: 20px;">إذا أردت اللعب واختراق الروتين...</p>
+        <button onclick="goToGamesMenu()">اضغط هنا</button>
+    </div>
+
+    <div id="games-menu">
+        <h2>اختر لعبة تخلي المخ تاعك يخدم</h2>
+        <div class="game-buttons">
+            <button onclick="startGame('guess')">1. احزر الرقم (Guess)</button>
+            <button onclick="startGame('dice')">2. رمي النرد (Dice Roll)</button>
+            <button onclick="startGame('flip')">3. فليب كوين (Coin Flip)</button>
+            <button onclick="startGame('rock_paper')">4. حجرة ورقة مقص</button>
+            <button onclick="startGame('math_quiz')">5. إختبار العمليات الرياضية</button>
+        </div>
+        <p style="font-size: 14px; margin-top: 30px; color: #888;">نقاطك الإجمالية: <span id="total-score-display">0</span></p>
+    </div>
+
+    <div id="game-screen">
+        <h2 id="current-game-title"></h2>
+        <div id="game-content">
+            
+            <div id="guess-game-container" style="display:none;">
+                <p>خمّن الرقم السري بين **1** و **100**. عندك **7** محاولات.</p>
+                <input type="number" id="guess-input" placeholder="اكتب رقمك هنا">
+                <button onclick="checkGuess()">خمّن!</button>
+                <p id="guess-game-message" style="font-size: 20px;"></p>
+                <p>المحاولات المتبقية: <span id="attempts-left">7</span></p>
+                <button onclick="initGuessGame()">ابدا لعبة جديدة</button>
+            </div>
+            
+            <div id="dice-game-container" style="display:none;">
+                <p class="big-text" id="dice-result">🎲</p>
+                <p id="dice-message" style="font-size: 20px;"></p>
+                <button onclick="rollDice()">إرمي النرد! (+10 نقاط إذا جا 6)</button>
+            </div>
+
+            <div id="flip-game-container" style="display:none;">
+                <p>اختر: **وجه (Head)** أو **ظهر (Tail)**.</p>
+                <p class="big-text" id="flip-result">❓</p>
+                <button onclick="flipCoin('H')">وجه (Head)</button>
+                <button onclick="flipCoin('T')">ظهر (Tail)</button>
+                <p id="flip-message" style="font-size: 20px;"></p>
+            </div>
+
+            <div id="rock-paper-game-container" style="display:none;">
+                <p>إختر الحركة:</p>
+                <p class="big-text" id="rock-paper-result">اختار</p>
+                <button onclick="playRockPaper('R')">حجرة 🪨</button>
+                <button onclick="playRockPaper('P')">ورقة 📄</button>
+                <button onclick="playRockPaper('S')">مقص ✂️</button>
+                <p id="rock-paper-message" style="font-size: 20px;"></p>
+            </div>
+
+            <div id="math-quiz-container" style="display:none;">
+                <p id="math-question" style="font-size: 22px; margin-bottom: 20px;">السؤال: ؟</p>
+                <input type="number" id="math-answer-input" placeholder="اكتب الإجابة">
+                <button onclick="checkMathAnswer()">تحقق</button>
+                <p id="math-quiz-message" style="font-size: 20px;"></p>
+                <p>نقاط الرياضيات: <span id="math-quiz-score">0</span></p>
+                <button onclick="initMathQuiz()">سؤال جديد</button>
+            </div>
+            
+        </div>
+        <button id="back-button" onclick="goToGamesMenu()">رجوع لاختيار لعبة أخرى</button>
+    </div>
+
+    <script>
+        // المتغيرات و الإعدادات الثابتة
+        const maxAttempts = 7;
+        let secretNumber; 
+        let attemptsLeft; 
+        let totalScore = 0;
+        let mathQuizScore = 0;
+        let currentMathAnswer;
+
+        const welcomeMessages = [
+            "إذا أردت اللعب واختراق الروتين...",
+            "تحيا الجزائر! هيا نختبر مخك.",
+            "باش تهاجر وتصنع المال، لازم تكون ذكي. ابدأ من هنا.",
+            "أحب الهاكر والروبوتيك... وأنت؟ يلا نلعب!"
+        ];
+
+        // -------------------------------------------------------------------
+        // دوال التنقل و النقاط
+        // -------------------------------------------------------------------
+
+        function hideAllGameContainers() {
+            document.getElementById('guess-game-container').style.display = 'none';
+            document.getElementById('dice-game-container').style.display = 'none';
+            document.getElementById('flip-game-container').style.display = 'none';
+            document.getElementById('rock-paper-game-container').style.display = 'none';
+            document.getElementById('math-quiz-container').style.display = 'none';
+        }
+
+        function updateScoreDisplay() {
+             document.getElementById('total-score-display').textContent = totalScore;
+        }
+
+        function goToGamesMenu() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('games-menu').style.display = 'block'; 
+            updateScoreDisplay();
+            hideAllGameContainers();
+        }
+
+        function startGame(gameKey) {
+            document.getElementById('games-menu').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            hideAllGameContainers(); 
+
+            if (gameKey === 'guess') {
+                document.getElementById('current-game-title').textContent = 'أنت تلعب الآن: احزر الرقم';
+                document.getElementById('guess-game-container').style.display = 'block';
+                initGuessGame();
+            } else if (gameKey === 'dice') {
+                document.getElementById('current-game-title').textContent = 'أنت تلعب الآن: رمي النرد';
+                document.getElementById('dice-game-container').style.display = 'block';
+                document.getElementById('dice-message').textContent = 'هل أنت محظوظ اليوم؟';
+                document.getElementById('dice-result').textContent = '🎲';
+            } else if (gameKey === 'flip') {
+                document.getElementById('current-game-title').textContent = 'أنت تلعب الآن: فليب كوين';
+                document.getElementById('flip-game-container').style.display = 'block';
+                document.getElementById('flip-message').textContent = 'إختر و إضغط لرمي العملة!';
+                document.getElementById('flip-result').textContent = '❓';
+            } else if (gameKey === 'rock_paper') {
+                document.getElementById('current-game-title').textContent = 'أنت تلعب الآن: حجرة ورقة مقص';
+                document.getElementById('rock-paper-game-container').style.display = 'block';
+                document.getElementById('rock-paper-message').textContent = 'راه دورك باش تلعب.';
+                document.getElementById('rock-paper-result').textContent = 'اختار';
+            } else if (gameKey === 'math_quiz') {
+                document.getElementById('current-game-title').textContent = 'أنت تلعب الآن: إختبار العمليات الرياضية';
+                document.getElementById('math-quiz-container').style.display = 'block';
+                initMathQuiz();
+            }
+        }
+
+        // -------------------------------------------------------------------
+        // دوال لعبة احزر الرقم (Guess)
+        // -------------------------------------------------------------------
+
+        function initGuessGame() {
+            secretNumber = Math.floor(Math.random() * 100) + 1;
+            attemptsLeft = maxAttempts;
+            document.getElementById('attempts-left').textContent = attemptsLeft; 
+            document.getElementById('guess-game-message').textContent = 'يلا خمم...'; 
+            document.getElementById('guess-input').value = '';
+            document.getElementById('guess-input').disabled = false;
+        }
+
+        function checkGuess() {
+            if (attemptsLeft === 0) return;
+            
+            const guessInput = document.getElementById('guess-input'); 
+            const guess = parseInt(guessInput.value);
+
+            if (isNaN(guess) || guess < 1 || guess > 100) { 
+                document.getElementById('guess-game-message').textContent = 'غلط! دخل رقم بين 1 و 100.'; 
+                return; 
+            }
+            
+            attemptsLeft--; 
+            document.getElementById('attempts-left').textContent = attemptsLeft;
+
+            if (guess === secretNumber) { 
+                document.getElementById('guess-game-message').innerHTML = `<span class="green-text">🤯 صحيت! جبتها! الرقم هو ${secretNumber}. (+10 نقاط)</span>`; 
+                document.getElementById('guess-input').disabled = true;
+                totalScore += 10;
+                updateScoreDisplay();
+            } else if (attemptsLeft === 0) {
+                 document.getElementById('guess-game-message').innerHTML = `<span class="red-text">خسارة! خلصولك المحاولات. الرقم كان ${secretNumber}.</span>`; 
+                 document.getElementById('guess-input').disabled = true;
+            } else if (guess < secretNumber) { 
+                document.getElementById('guess-game-message').textContent = 'الرقم السري **أكبر** من تخمينك.'; 
+            } else { 
+                document.getElementById('guess-game-message').textContent = 'الرقم السري **أصغر** من تخمينك.'; 
+            }
+
+            guessInput.value = ''; 
+        }
+
+        // -------------------------------------------------------------------
+        // دوال رمي النرد (Dice Roll)
+        // -------------------------------------------------------------------
+
+        function rollDice() {
+            const result = Math.floor(Math.random() * 6) + 1; 
+            let diceIcon = '';
+            let message = '';
+
+            switch(result) {
+                case 1: diceIcon = '⚀'; message = 'خسارة! جاك رقم صغير.'; break;
+                case 2: diceIcon = '⚁'; message = 'رقم متوسط، مش خسارة.'; break;
+                case 3: diceIcon = '⚂'; message = 'نصف بنصف.'; break;
+                case 4: diceIcon = '⚃'; message = 'مليح! راك قريب.'; break;
+                case 5: diceIcon = '⚄'; message = 'هايل! قريب الفوز.'; break;
+                case 6: diceIcon = '⚅'; message = '🥳 فوز كبير! الرقم 6! (+10 نقاط)'; totalScore += 10; updateScoreDisplay(); break;
+            }
+
+            document.getElementById('dice-result').textContent = diceIcon;
+            document.getElementById('dice-message').textContent = `${message} (النتيجة: ${result})`;
+        }
+
+        // -------------------------------------------------------------------
+        // دوال فليب كوين (Coin Flip)
+        // -------------------------------------------------------------------
+        
+        function flipCoin(userChoice) {
+            const result = (Math.random() < 0.5) ? 'H' : 'T'; // H: Head, T: Tail
+            const resultText = (result === 'H') ? 'وجه (Head)' : 'ظهر (Tail)';
+            const resultIcon = (result === 'H') ? '👑' : '🪙'; 
+            
+            document.getElementById('flip-result').textContent = resultIcon;
+
+            if (userChoice === result) {
+                document.getElementById('flip-message').innerHTML = `<span class="green-text">✅ صحيت! العملة جات على ${resultText}. (+5 نقاط)</span>`;
+                totalScore += 5;
+                updateScoreDisplay();
+            } else {
+                document.getElementById('flip-message').innerHTML = `<span class="red-text">❌ خسارة! العملة جات على ${resultText}.</span>`;
+            }
+        }
+        
+        // -------------------------------------------------------------------
+        // دوال حجرة ورقة مقص
+        // -------------------------------------------------------------------
+
+        function playRockPaper(userChoice) {
+            const choices = ['R', 'P', 'S']; // R: Rock, P: Paper, S: Scissors
+            const botChoice = choices[Math.floor(Math.random() * 3)];
+            const symbols = { 'R': '🪨', 'P': '📄', 'S': '✂️' };
+            
+            let message = '';
+            let won = false;
+            
+            if (userChoice === botChoice) {
+                message = 'تعادل! لا نقاط.';
+            } else if (
+                (userChoice === 'R' && botChoice === 'S') || 
+                (userChoice === 'P' && botChoice === 'R') || 
+                (userChoice === 'S' && botChoice === 'P')
+            ) {
+                message = '🥳 ربحت! (+5 نقاط)';
+                totalScore += 5;
+                updateScoreDisplay();
+                won = true;
+            } else {
+                message = '😭 خسرت! فاز الكمبيوتر.';
+            }
+
+            const messageClass = won ? 'green-text' : 'red-text';
+            document.getElementById('rock-paper-result').textContent = `${symbols[userChoice]} vs ${symbols[botChoice]}`;
+            document.getElementById('rock-paper-message').innerHTML = `<span class="${messageClass}">${message}</span> (أنت: ${symbols[userChoice]}، الكمبيوتر: ${symbols[botChoice]})`;
+        }
+
+        // -------------------------------------------------------------------
+        // دوال إختبار العمليات الرياضية
+        // -------------------------------------------------------------------
+
+        function initMathQuiz() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            const operators = ['+', '-', '*'];
+            const operator = operators[Math.floor(Math.random() * operators.length)];
+            let questionText = `${num1} ${operator} ${num2} = ؟`;
+            
+            let result;
+            if (operator === '+') result = num1 + num2;
+            else if (operator === '-') result = num1 - num2;
+            else if (operator === '*') result = num1 * num2;
+            
+            currentMathAnswer = result;
+            document.getElementById('math-question').textContent = questionText;
+            document.getElementById('math-answer-input').value = '';
+            document.getElementById('math-quiz-message').textContent = 'اجب بسرعة.';
+            document.getElementById('math-quiz-score').textContent = mathQuizScore;
+        }
+
+        function checkMathAnswer() {
+            const userAnswer = parseInt(document.getElementById('math-answer-input').value);
+            
+            if (isNaN(userAnswer)) {
+                 document.getElementById('math-quiz-message').textContent = 'أدخل رقم صحيح خويا.';
+                 return;
+            }
+
+            if (userAnswer === currentMathAnswer) {
+                 document.getElementById('math-quiz-message').innerHTML = '<span class="green-text">✅ صحيت! إجابة صحيحة. (+5 نقاط)</span>';
+                 mathQuizScore += 5;
+                 totalScore += 5;
+            } else {
+                 document.getElementById('math-quiz-message').innerHTML = `<span class="red-text">❌ غالط! الإجابة الصحيحة هي ${currentMathAnswer}.</span>`;
+            }
+            document.getElementById('math-quiz-score').textContent = mathQuizScore;
+            updateScoreDisplay();
+            setTimeout(initMathQuiz, 1500); // سؤال جديد بعد ثانية ونصف
+        }
+
+        // -------------------------------------------------------------------
+        // نقطة البداية (Entry Point) و تغيير رسالة الترحيب
+        // -------------------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', function() {
+            // رسالة الترحيب المتغيرة
+            const randomIndex = Math.floor(Math.random() * welcomeMessages.length);
+            document.getElementById('welcome-message').textContent = welcomeMessages[randomIndex];
+            document.getElementById('welcome-screen').style.display = 'block';
+            updateScoreDisplay();
+        });
+    </script>
+</body>
+</html>
